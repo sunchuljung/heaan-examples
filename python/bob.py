@@ -30,8 +30,6 @@ def bob(client_data):
 
     # Align keypack with client's public keys
     stream.load(payload['pubkeys'])
-    print(bytes(payload['pubkeys'], 'utf-8')[:10])
-    print(stream.bin[:10])
     keypack.load(stream)
 
     # Create HomEvaluator container for server side computations
