@@ -65,11 +65,6 @@ def alice(
     keygen.gen_enc_key()
     keygen.gen_mult_key()
 
-    # Create container for data stream compatitable with native HEaaN library
-    # and save KeyPack in it
-    pubkeys = NativeStream()
-    keypack.save(pubkeys)
-
     # Create encryptor
     encryptor = Encryptor(context)
 
@@ -83,24 +78,19 @@ def alice(
     ciphertext = Ciphertext(context)
     encryptor.encrypt(message, keypack, ciphertext)
 
-    # Container for data stream compatitable with native HEaaN library
-    # and save the encrypted image in it
-    userdata = NativeStream()
-    ciphertext.save(userdata)
-
     # Server URL
     URL = f'http://{host}:{port}/heaan_service'
     # Serialize data and post it for outsourcing computations
     payload = pickle.dumps({
-            'userdata' : userdata.bin,
-            'parameter' : args.parameter,
-            'pubkeys' : pubkeys.bin
+            'userdata' : ciphertext.bin,
+            'parameter' : parameter,
+            'pubkeys' : keypack.bin
     })
     response = requests.post(URL, data=payload)
 
     if response.status_code == 200:
         # Deserialize the reponse from server
-        result = pickle.loads(response.content)
+        result = Ciphertext(context).load(stream=pickle.loads(response.content))
 
         # Create decryptor and decrypt the response using secret key
         decryptor = Decryptor(context)

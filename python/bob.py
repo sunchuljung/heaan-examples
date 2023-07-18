@@ -21,16 +21,9 @@ def bob(client_data):
     param = getattr(ParameterPreset, payload['parameter'])
     context = make_context(param)
 
-    # Create encryptor, keypack container
+    # Create encryptor and keypack container, align it with client's public keys
     encryptor = Encryptor(context)
-    keypack = KeyPack(context)
-
-    # NativeStream container reusable within the entire scope
-    stream = NativeStream()
-
-    # Align keypack with client's public keys
-    stream.load(payload['pubkeys'])
-    keypack.load(stream)
+    keypack = KeyPack(context).load(stream=payload['pubkeys'])
 
     # Create HomEvaluator container for server side computations
     evaluator = HomEvaluator(context, keypack)
@@ -42,17 +35,14 @@ def bob(client_data):
     encryptor.encrypt(message, keypack, filter)
 
     # Create a ciphertext container and deserialize userdata in it
-    stream.clear().load(payload['pubkeys'])
-    userdata = Ciphertext(context).load(stream)
+    userdata = Ciphertext(context).load(payload['userdata'])
 
     # Create the result ciphertext container and process userdata ciphertext
     result = Ciphertext(context)
     evaluator.mult(userdata, filter, result)
 
     # Save result ciphertext in the existing stream container
-    stream.clear()
-    result.save(stream)
-    return pickle.dumps(result)
+    return pickle.dumps(result.bin)
 
 
 @app.route('/heaan_service', methods=['POST'])
